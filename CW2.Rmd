@@ -1,0 +1,184 @@
+---
+title: "cw2"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+# Q2
+
+load("dataex2.Rdata")
+require(maxLik)
+```
+
+
+```{r}
+log_likeq2 <- function(param, data){
+x <- data[,1]
+r <- data[,2]
+# print(x)
+# print(r)
+
+
+mu <- param[1]
+# print(mu)
+# sigma <- param[2]
+
+sum((r*log(rnorm(x, mean = mu, sd = 1.5))) + ((1-r)*log(dnorm(x, mean = mu, sd = 1.5))))
+
+# dlnorm(y, mean = mu, sd = sigma)
+# sum((y*(beta0+beta1*x)) - log(1+exp(beta0+beta1*x)))
+}
+```
+
+
+```{r}
+mle <- maxLik(logLik = log_likeq2, data = dataex2, 
+              start = 1)
+
+summary(mle)
+
+```
+```{r}
+res <- optim(c(0), log_likeq2, data = dataex2,
+control = list(fnscale = -1), hessian = FALSE)
+res
+```
+
+
+```{r}
+
+# Q4 
+
+
+load("dataex4.Rdata")
+```
+
+```{r}
+rm(list = ls())
+install.packages('maxLik')
+require(maxLik)
+```
+
+
+```{r}
+log_likeq4 <- function(param, data){
+x <- data[,1]
+y <- data[,2]
+ind <- which(is.na(data[, 2]) == FALSE)
+x <- x[ind]
+
+y <- y[ind]
+
+beta0 <- param[1]
+beta1 <- param[2]
+sum((y*(beta0+beta1*x)) - log(1+exp(beta0+beta1*x)))
+}
+```
+
+
+```{r}
+
+mle <- maxLik(logLik = log_likeq4, data = dataex4, 
+              start = c(beta0 = 0, beta1 = 0))
+
+summary(mle)
+
+```
+
+
+```{r}
+res <- optim(c(0, 0), log_like4, data = dataex4,
+control = list(fnscale = -1), hessian = TRUE)
+res
+
+sqrt(diag(solve(-1*res$hessian)))
+```
+```{r}
+# Q5
+
+load("dataex5.Rdata")
+```
+
+
+```{r}
+y = dataex5
+```
+
+
+
+```{r}
+
+em <- function(y, theta0, eps){
+n <- length(y)
+theta <- theta0
+p <- theta[1]
+mu <- theta[2]
+sigma <- theta[3]
+lambda <- theta[4]
+diff <- 1
+
+while(diff > eps){
+theta.old <- theta
+#E-step
+ptilde1 <- p*dlnorm(y, mean = mu, sd = sigma)
+ptilde2 <- (1 - p)*lambda*exp((-1)*lambda*y)
+ptilde <- ptilde1/(ptilde1 + ptilde2)
+
+#M-step
+p <- mean(ptilde)
+mu <- sum(log(y)*ptilde)/sum(ptilde)
+sigma <- sqrt(sum(((log(y) - mu)^2)*ptilde)/sum(ptilde))
+lambda <- sum(1 - ptilde)/sum(y*(1 - ptilde))
+theta <- c(p, mu, sigma, lambda)
+diff <- sum(abs(theta - theta.old))
+}
+return(theta)
+}
+
+res <- em(y = dataex5, c(0.1, 1, 0.5, 90, 4), 0.00001)
+p <- res[1]
+mu <- res[2]
+sigma <- res[3]
+sigma_sq <- sigma*sigma
+lambda <- res[4]
+
+p; mu; sigma; sigma_sq; lambda
+```
+
+
+```{r}
+
+hist(dataex5, main = "Given Data Distribution",
+xlab = "Units",
+ylab = "Density",
+cex.main = 1.5, cex.lab = 1.5, cex.axis = 1.4, freq = F, ylim = c(0,0.05))
+curve(p*dlnorm(x, mu, sigma) + (1 - p)*lambda*exp(-lambda*x),
+add = TRUE, lwd = 2, col = "blue2")
+```
+
+
+```{r}
+```
+
+
+```{r}
+
+
+
+
+
+
+```
+
+
+
